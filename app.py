@@ -11,7 +11,7 @@ from functools import wraps
 
 app = Flask(__name__)
 
-# Only allow your frontend
+# Allow your frontend
 CORS(app, origins=["https://pravi-5vv.pages.dev"])
 
 # Firebase init
@@ -54,7 +54,6 @@ def login():
     if not username or not password:
         return jsonify({"error": "Missing credentials"}), 400
 
-    # Find user in Firestore
     users = db.collection("admin_users")\
                .where("username", "==", username)\
                .where("active", "==", True)\
@@ -66,14 +65,11 @@ def login():
 
     user = user_doc.to_dict()
 
-    # Check password
     if not bcrypt.checkpw(password.encode(), user["passwordHash"].encode()):
         return jsonify({"error": "Invalid credentials"}), 401
 
-    # Update last login
     user_doc.reference.update({"lastLogin": firestore.SERVER_TIMESTAMP})
 
-    # Generate JWT
     token = jwt.encode({
         "uid": user_doc.id,
         "username": user["username"],
@@ -89,7 +85,7 @@ def login():
 def verify():
     return jsonify({"valid": True, "user": request.user})
 
-# ══ SUBMIT LEAD (public) ══
+# ══ SUBMIT LEAD ══
 @app.route('/api/leads', methods=['POST'])
 def submit_lead():
     data = request.json
@@ -109,9 +105,10 @@ def submit_lead():
         "priority": "normal",
         "createdAt": firestore.SERVER_TIMESTAMP
     })
+
     return jsonify({"success": True})
 
-# ══ GET LEADS (admin only) ══
+# ══ GET LEADS ══
 @app.route('/api/leads', methods=['GET'])
 @require_auth
 def get_leads():
@@ -137,18 +134,7 @@ def delete_lead(lead_id):
     db.collection("leads").document(lead_id).delete()
     return jsonify({"success": True})
 
+# ══ RUN (Render Fix) ══
 if __name__ == '__main__':
-    app.run(debug=False)
-```
-
----
-
-## Update `requirements.txt` Too
-
-Replace it with:
-```
-flask
-flask-cors
-firebase-admin
-bcrypt
-pyjwt
+    port = int(os.environ.get("PORT", 10000))
+    app.run(host='0.0.0.0', port=port)
