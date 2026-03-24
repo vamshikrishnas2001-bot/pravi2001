@@ -139,20 +139,4 @@ if __name__ == '__main__':
     port = int(os.environ.get("PORT", 10000))
     app.run(host='0.0.0.0', port=port)
     
-from firebase_admin import firestore
-import bcrypt
 
-admin_ref = db.collection("admin_users").document("admin1")
-
-if not admin_ref.get().exists:
-    hashed = bcrypt.hashpw("Pravi@Secure#2026".encode(), bcrypt.gensalt()).decode()
-
-    admin_ref.set({
-        "username": "admin",
-        "passwordHash": hashed,
-        "role": "admin",
-        "active": True,
-        "createdAt": firestore.SERVER_TIMESTAMP
-    })
-
-    print("✅ Admin created")
